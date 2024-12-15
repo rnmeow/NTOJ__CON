@@ -61,11 +61,17 @@ class ProsetHandler(RequestHandler):
         except tornado.web.HTTPError:
             order_reverse = False
 
+        try:
+            search_name = self.get_argument('name')
+        except tornado.web.HTTPError:
+            search_name = None
+
         flt = {
             'order': order,
             'problem_show': problem_show,
             'online': show_only_online_pro,
             'reverse': order_reverse,
+            'name': search_name,
         }
 
         try:
@@ -76,7 +82,7 @@ class ProsetHandler(RequestHandler):
         err, prolist = await ProService.inst.list_pro(self.acct)
 
         proclass = None
-        if proclass_id is not None:
+        if proclass_id:
             err, proclass = await ProClassService.inst.get_proclass(proclass_id)
             if err:
                 self.error(err)
@@ -96,8 +102,18 @@ class ProsetHandler(RequestHandler):
                 _, creator = await UserService.inst.info_acct(proclass['acct_id'])
                 proclass['creator_name'] = creator.name
 
+        if search_name:
+            search_name = set(search_name.lower())
+            def _find(name: str):
+                for ch in name.lower():
+                    if ch in search_name:
+                        return True
+
+                return False
+            prolist = filter(lambda pro: _find(pro['name']), prolist)
+
         if show_only_online_pro:
-            prolist = list(filter(lambda pro: pro['status'] == ProConst.STATUS_ONLINE, prolist))
+            prolist = filter(lambda pro: pro['status'] == ProConst.STATUS_ONLINE, prolist)
 
         _, acct_states = await RateService.inst.map_rate_acct(self.acct)
         ac_pro_cnt = 0
@@ -111,14 +127,15 @@ class ProsetHandler(RequestHandler):
 
             return pro
 
-        prolist = list(map(lambda pro: _set_pro_state_and_tags(pro), prolist))
+        prolist = map(lambda pro: _set_pro_state_and_tags(pro), prolist)
 
         if problem_show == "onlyac":
-            prolist = list(filter(lambda pro: pro['state'] == ChalConst.STATE_AC, prolist))
+            prolist = filter(lambda pro: pro['state'] == ChalConst.STATE_AC, prolist)
 
         elif problem_show == "notac":
-            prolist = list(filter(lambda pro: pro['state'] != ChalConst.STATE_AC, prolist))
+            prolist = filter(lambda pro: pro['state'] != ChalConst.STATE_AC, prolist)
 
+        prolist = list(prolist)
         for pro in prolist:
             _, rate = await RateService.inst.get_pro_ac_rate(pro['pro_id'])
             pro['rate_data'] = rate

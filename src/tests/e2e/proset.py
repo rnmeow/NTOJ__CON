@@ -57,3 +57,13 @@ class ProsetTest(AsyncTest):
             self.assertEqual(trs[2].select('td')[3].text.strip().replace('\n', ''), '0.00%(0/ 0)')
             self.assertEqual(trs[2].select('td')[4].text.strip().replace('\n', ''), '0.00%(0/0)')
             self.assertEqual(trs[2].select('td')[5].text, '')
+
+            html = self.get_html('proset?name=猜數字', admin_session)
+            trs = html.select('#prolist > tbody > tr')
+            self.assertEqual(len(trs), 1)
+            self.assertEqual(trs[0].select('td')[0].text, '2')
+            self.assertEqual(trs[0].select('td')[1].text, ChalConst.STATE_LONG_STR[ChalConst.STATE_AC])
+            self.assertEqual(trs[0].select('td')[2].text.strip().replace('\n', ''), '猜數字')
+            self.assertEqual(trs[0].select('td')[3].text.strip().replace('\n', ''), '100.00%(1/ 1)')
+            self.assertEqual(trs[0].select('td')[4].text.strip().replace('\n', ''), '100.00%(1/1)')
+            self.assertEqual(trs[0].select('td')[5].text, '')
