@@ -190,7 +190,10 @@
       <strong>Standings&nbsp;&nbsp;</strong>
       <select class="form-select" id="cont">
         {% for board in board_list %}
-        <option value="{{ board['board_id'] }}" {% if board['name'] == name %}selected{% end %}>{{ board['name'] }}</option>
+          {% if not user.is_kernel() and board['status'] != BoardConst.STATUS_ONLINE %}
+            {% continue %}
+          {% end %}
+          <option value="{{ board['board_id'] }}" {% if board['name'] == name %}selected{% end %}>{{ board['name'] }}</option>
         {% end %}
       </select>
     </div>
