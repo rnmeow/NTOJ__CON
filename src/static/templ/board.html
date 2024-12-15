@@ -97,22 +97,28 @@
 
   function GetCount() {
     var j_count = $('#count');
-    var now = new Date().getTime();
-    var delta = Math.floor((end - now) / 1000);
-    if (delta <= 0) {
-      j_count.text('Over');
+
+    let now = new Date().getTime();
+    let secs = Math.floor((end - now) / 1000);
+    let ss = 0, mm = 0, hh = 0, dd = 0;
+    ss = Math.floor(secs % 60);
+    if (secs > 0) {
+      dd = Math.floor(secs / 86400);
+      secs %= 86400;
+      hh = Math.floor(secs / 3600);
+      secs %= 3600;
+      mm = Math.floor(secs / 60) % 60;
+
+      const getS = (number) => {
+        return number > 1 ? 's': '';
+      };
+      j_count.text(`${dd} Day${getS(dd)} ${hh} Hour${getS(hh)} ${mm} Minute${getS(mm)} ${ss} Second${getS(ss)} Left`);
+      setTimeout(() => GetCount(), 1000);
     } else {
-      var hour = Math.floor(delta / 3600);
-      delta = (delta % 3600);
-      var minute = Math.floor(delta / 60);
-      delta = (delta % 60);
-      var second = Math.floor(delta);
-      j_count.text(hour + ' ' + 'hour' + (hour > 1 ? 's' : '') + '  ' + minute + ' ' + 'minute' + (minute > 1 ? 's' : '') + '  ' + second + ' ' + 'second' + (second >1 ? 's' : '') + ' ' + 'Left');
-      setTimeout(function(){
-        GetCount()
-      },1000);
+      j_count.text('Over');
     }
   }
+
   function init() {
     GetCount();
   }
