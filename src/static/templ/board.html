@@ -150,7 +150,7 @@
       <tbody>
         {% for acct in acctlist %}
         {% set acct_id = acct.acct_id %}
-        <tr>
+        <tr {% if acct_id == user.acct_id %} style="--bs-table-bg: #123456;" {% end %}>
           <td class="_rank">{{ acct.rank }}</td>
           <td class="_acct">&nbsp<a href="/oj/acct/{{ acct_id }}/">{{ acct.name }}</a></td>
           <td class="_score"><a href="/oj/chal/?acctid={{ acct_id }}">{{ acct.rate }} / {{ acct_submit[acct_id] }}</a></td>

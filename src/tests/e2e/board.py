@@ -38,6 +38,7 @@ class BoardTest(AsyncTest):
             self.assertEqual(html.select('th._pro')[0].text, '1')
             self.assertEqual(html.select('th._pro')[1].text, '2')
             tr0 = html.select('tbody > tr')[0]
+            self.assertEqual(tr0.attrs['style'], '--bs-table-bg: #123456;')
             self.assertEqual(tr0.select_one('td._rank').text.strip(), '1')
             self.assertEqual(tr0.select_one('td._acct').text.strip(), 'admin')
             self.assertEqual(tr0.select_one('td._score').text.strip(), '200 / 9')
