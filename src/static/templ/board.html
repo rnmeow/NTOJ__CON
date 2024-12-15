@@ -141,6 +141,17 @@
     $("#topScrollBar").scrollLeft($(this).scrollLeft());
   });
 
+  $("#showSelf").on('change', function (e) {
+    let clicked = $(this).is(":checked");
+    $("tbody > tr").each((idx, el) => {
+      el = $(el);
+      if (!el.hasClass("_self")) {
+        if (clicked) el.hide();
+        else el.show();
+      }
+    });
+  });
+
   setTimeout(() => {
     var board = document.getElementById('board1');
     if (window.localStorage.getItem('board_scoll_left')) {
@@ -200,6 +211,10 @@
     <h3>
       <div id="count"></div>
     </h3>
+    <div class="form-check form-check-inline">
+      <label class="form-check-label" for="showSelf">Only Show Myself</label>
+      <input type="checkbox" id="showSelf" class="form-check-input">
+    </div>
   </div>
   <div style="overflow-x: scroll; overflow-y: hidden;" id="topScrollBar">
     <div style="height: 8px; width:{{9+64+150+112+len(prolist)*99}}px;"></div>
@@ -219,7 +234,7 @@
       <tbody>
         {% for acct in acctlist %}
         {% set acct_id = acct.acct_id %}
-        <tr {% if acct_id == user.acct_id %} style="--bs-table-bg: #123456;" {% end %}>
+        <tr {% if acct_id == user.acct_id %} style="--bs-table-bg: #123456;" class="_self" {% end %}>
           <td class="_rank">{{ acct.rank }}</td>
           <td class="_acct">&nbsp<a href="/oj/acct/{{ acct_id }}/">{{ acct.name }}</a></td>
           <td class="_score"><a href="/oj/chal/?acctid={{ acct_id }}">{{ acct.rate }} / {{ acct_submit[acct_id] }}</a></td>
