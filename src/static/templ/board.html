@@ -1,6 +1,55 @@
 {% import math %}
 {% from services.chal import ChalConst %}
 <style>
+  /* from https://www.astralweb.com.tw/pure-css-implementation-table-headers-columns-fixed/ */
+  /* freeze table head like excel */
+  table {
+    table-layout: fixed;
+  }
+  td._rank, th._rank {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+  }
+  table thead tr th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  th._rank {
+    z-index: 4;
+  }
+  @media only screen and (min-width: 992px) {
+    td._acct {
+      position: sticky;
+      left: 64px;
+      z-index: 1;
+    }
+    tr th._acct {
+      position: sticky;
+      left: 64px;
+      z-index: 2;
+    }
+
+    td._score {
+      position: sticky;
+      left: 214px;
+      z-index: 1;
+    }
+    tr th._score {
+      position: sticky;
+      left: 214px;
+      z-index: 2;
+    }
+
+    td._submit {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+    }
+  }
+  /* end */
+
   table th._rank {
     text-align: center;
     width: 64px;
@@ -85,6 +134,13 @@
     window.localStorage.setItem('board_scoll_left', board.scrollLeft)
   }, false)
 
+  $("#topScrollBar").scroll(function() {
+    $("#board1").scrollLeft($(this).scrollLeft());
+  });
+  $("#board1").scroll(function() {
+    $("#topScrollBar").scrollLeft($(this).scrollLeft());
+  });
+
   setTimeout(() => {
     var board = document.getElementById('board1');
     if (window.localStorage.getItem('board_scoll_left')) {
@@ -142,7 +198,10 @@
       <div id="count"></div>
     </h3>
   </div>
-  <div class="col-lg-12" style="overflow-x: scroll;" id="board1">
+  <div style="overflow-x: scroll; overflow-y: hidden;" id="topScrollBar">
+    <div style="height: 8px; width:{{9+64+150+112+len(prolist)*99}}px;"></div>
+  </div>
+  <div class="col-lg-12" id="board1" style="overflow-x: scroll; max-height: 100vh;">
     <table class="table table-hover table-sm table-bordered table-responsive-sm col mx-lg-3" style="width:{{9+64+150+112+len(prolist)*99}}px;">
       <thead>
         <tr>
