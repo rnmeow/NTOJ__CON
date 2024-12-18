@@ -1,3 +1,4 @@
+{% from services.board import BoardConst %}
 <script type="text/javascript" id="contjs">
     function init() {
     }
@@ -8,11 +9,17 @@
 	    <tr>
 			<th scope="col">#</th>
 			<th scope="col">Board Name</th>
-			<th scope="col">Status</th>
+            <th scope="col">Expire Status</th>
+            {% if user.is_kernel() %}
+                <th scope="col">Public Status</th>
+            {% end %}
 	    </tr>
 	</thead>
 	<tbody>
 	{% for board in boardlist %}
+        {% if not user.is_kernel() and board['status'] != BoardConst.STATUS_ONLINE %}
+            {% continue %}
+        {% end %}
 	    <tr>
 			<th scope="row">{{ board['board_id'] }}</th>
             <td><a href="/oj/board/{{ board['board_id'] }}/">{{ board['name'] }}</a></td>
@@ -20,11 +27,20 @@
 				{% set delta = board['end'] - datetime.datetime.now().replace(tzinfo=datetime.timezone(datetime.timedelta(hours=8))) %}
 				{% set deltasecond = delta.days * 24 * 60 * 60 + delta.seconds %}
 				{% if deltasecond <= 0 %}
-				Over
+				    Over
 				{% else %}
-				Online
+				    Online
 				{% end %}
 			</td>
+            {% if user.is_kernel() %}
+                {% if board['status'] == BoardConst.STATUS_ONLINE %}
+                    <td>Public</td>
+                {% elif board['status'] == BoardConst.STATUS_HIDDEN %}
+                    <td>Hidden</td>
+                {% elif board['status'] == BoardConst.STATUS_OFFLINE %}
+                    <td>Offline</td>
+                {% end %}
+            {% end %}
 	    </tr>
 	{% end %}
 	</tbody>

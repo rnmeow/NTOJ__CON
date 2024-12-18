@@ -194,7 +194,8 @@ class RateService:
                 '''
                     SELECT "challenge"."acct_id", "challenge"."pro_id",
                     ROUND(MAX("challenge_state"."rate"), (SELECT rate_precision FROM problem WHERE pro_id = challenge.pro_id)) AS "rate",
-                    COUNT("challenge_state") AS "count"
+                    COUNT("challenge_state") AS "count",
+                    MIN("challenge_state"."state") AS "state"
                     FROM "challenge"
                     INNER JOIN "challenge_state"
                     ON "challenge"."chal_id" = "challenge_state"."chal_id"
@@ -208,7 +209,7 @@ class RateService:
             )
 
         statemap = defaultdict(dict)
-        for acct_id, pro_id, rate, count in result:
-            statemap[acct_id][pro_id] = {'rate': rate, 'count': count}
+        for acct_id, pro_id, rate, count, state in result:
+            statemap[acct_id][pro_id] = {'rate': rate, 'count': count, 'state': state}
 
         return None, statemap

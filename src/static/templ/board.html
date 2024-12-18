@@ -1,5 +1,55 @@
 {% import math %}
+{% from services.chal import ChalConst %}
 <style>
+  /* from https://www.astralweb.com.tw/pure-css-implementation-table-headers-columns-fixed/ */
+  /* freeze table head like excel */
+  table {
+    table-layout: fixed;
+  }
+  td._rank, th._rank {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+  }
+  table thead tr th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  th._rank {
+    z-index: 4;
+  }
+  @media only screen and (min-width: 992px) {
+    td._acct {
+      position: sticky;
+      left: 64px;
+      z-index: 1;
+    }
+    tr th._acct {
+      position: sticky;
+      left: 64px;
+      z-index: 2;
+    }
+
+    td._score {
+      position: sticky;
+      left: 214px;
+      z-index: 1;
+    }
+    tr th._score {
+      position: sticky;
+      left: 214px;
+      z-index: 2;
+    }
+
+    td._submit {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+    }
+  }
+  /* end */
+
   table th._rank {
     text-align: center;
     width: 64px;
@@ -84,6 +134,24 @@
     window.localStorage.setItem('board_scoll_left', board.scrollLeft)
   }, false)
 
+  $("#topScrollBar").scroll(function() {
+    $("#board1").scrollLeft($(this).scrollLeft());
+  });
+  $("#board1").scroll(function() {
+    $("#topScrollBar").scrollLeft($(this).scrollLeft());
+  });
+
+  $("#showSelf").on('change', function (e) {
+    let clicked = $(this).is(":checked");
+    $("tbody > tr").each((idx, el) => {
+      el = $(el);
+      if (!el.hasClass("_self")) {
+        if (clicked) el.hide();
+        else el.show();
+      }
+    });
+  });
+
   setTimeout(() => {
     var board = document.getElementById('board1');
     if (window.localStorage.getItem('board_scoll_left')) {
@@ -96,22 +164,28 @@
 
   function GetCount() {
     var j_count = $('#count');
-    var now = new Date().getTime();
-    var delta = Math.floor((end - now) / 1000);
-    if (delta <= 0) {
-      j_count.text('Over');
+
+    let now = new Date().getTime();
+    let secs = Math.floor((end - now) / 1000);
+    let ss = 0, mm = 0, hh = 0, dd = 0;
+    ss = Math.floor(secs % 60);
+    if (secs > 0) {
+      dd = Math.floor(secs / 86400);
+      secs %= 86400;
+      hh = Math.floor(secs / 3600);
+      secs %= 3600;
+      mm = Math.floor(secs / 60) % 60;
+
+      const getS = (number) => {
+        return number > 1 ? 's': '';
+      };
+      j_count.text(`${dd} Day${getS(dd)} ${hh} Hour${getS(hh)} ${mm} Minute${getS(mm)} ${ss} Second${getS(ss)} Left`);
+      setTimeout(() => GetCount(), 1000);
     } else {
-      var hour = Math.floor(delta / 3600);
-      delta = (delta % 3600);
-      var minute = Math.floor(delta / 60);
-      delta = (delta % 60);
-      var second = Math.floor(delta);
-      j_count.text(hour + ' ' + 'hour' + (hour > 1 ? 's' : '') + '  ' + minute + ' ' + 'minute' + (minute > 1 ? 's' : '') + '  ' + second + ' ' + 'second' + (second >1 ? 's' : '') + ' ' + 'Left');
-      setTimeout(function(){
-        GetCount()
-      },1000);
+      j_count.text('Over');
     }
   }
+
   function init() {
     GetCount();
   }
@@ -127,15 +201,25 @@
       <strong>Standings&nbsp;&nbsp;</strong>
       <select class="form-select" id="cont">
         {% for board in board_list %}
-        <option value="{{ board['board_id'] }}" {% if board['name'] == name %}selected{% end %}>{{ board['name'] }}</option>
+          {% if not user.is_kernel() and board['status'] != BoardConst.STATUS_ONLINE %}
+            {% continue %}
+          {% end %}
+          <option value="{{ board['board_id'] }}" {% if board['name'] == name %}selected{% end %}>{{ board['name'] }}</option>
         {% end %}
       </select>
     </div>
     <h3>
       <div id="count"></div>
     </h3>
+    <div class="form-check form-check-inline">
+      <label class="form-check-label" for="showSelf">Only Show Myself</label>
+      <input type="checkbox" id="showSelf" class="form-check-input">
+    </div>
   </div>
-  <div class="col-lg-12" style="overflow-x: scroll;" id="board1">
+  <div style="overflow-x: scroll; overflow-y: hidden;" id="topScrollBar">
+    <div style="height: 8px; width:{{9+64+150+112+len(prolist)*99}}px;"></div>
+  </div>
+  <div class="col-lg-12" id="board1" style="overflow-x: scroll; max-height: 100vh;">
     <table class="table table-hover table-sm table-bordered table-responsive-sm col mx-lg-3" style="width:{{9+64+150+112+len(prolist)*99}}px;">
       <thead>
         <tr>
@@ -150,7 +234,7 @@
       <tbody>
         {% for acct in acctlist %}
         {% set acct_id = acct.acct_id %}
-        <tr>
+        <tr {% if acct_id == user.acct_id %} style="--bs-table-bg: #123456;" class="_self" {% end %}>
           <td class="_rank">{{ acct.rank }}</td>
           <td class="_acct">&nbsp<a href="/oj/acct/{{ acct_id }}/">{{ acct.name }}</a></td>
           <td class="_score"><a href="/oj/chal/?acctid={{ acct_id }}">{{ acct.rate }} / {{ acct_submit[acct_id] }}</a></td>
@@ -159,6 +243,10 @@
             {% if acct_id in ratemap and pro_id in ratemap[acct_id] %}
               {% set rate = ratemap[acct_id][pro_id] %}
               {% set sc = math.floor(rate['rate'] / 10) %}
+              {% if rate['state'] == ChalConst.STATE_AC %}
+                {% set sc = 10 %}
+              {% end %}
+
               <td class="_pro _state-{{ sc }} _state"><a href="/oj/chal/?acctid={{ acct_id }}&proid={{ pro_id }}&state=0">{{ rate['rate'] }} / {{ rate['count'] }}</a></td>
             {% else %}
               <td class="_pro _state">&nbsp</td>

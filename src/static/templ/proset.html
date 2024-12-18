@@ -13,6 +13,7 @@
         function get_goto_url(proclass_id) {
             let order = j_filter.find("#order").val();
             let show = j_filter.find("#show").val();
+            let search_name = j_filter.find("#name").val();
             if (proclass_id == -1)
                 proclass_id = $("#curProclassId").attr("proclass");
             let is_online = j_filter.find("#online").is(":checked");
@@ -37,6 +38,10 @@
 
             if (proclass_id != 'None') {
                 url += `&proclass_id=${proclass_id}`;
+            }
+
+            if (search_name != '') {
+                url += `&name=${search_name}`;
             }
 
             return url;
@@ -309,6 +314,11 @@
             </div>
 
             <div class="mb-1">
+                <label for="name" class="form-label">Search Name</label>
+                <input type="text" id="name" class="form-control" placeholder="problem name" value="{{ flt['name'] if flt['name'] else '' }}">
+            </div>
+
+            <div class="mb-1">
                 <button id="filter_submit" class="btn btn-primary" type="button">Filter</button>
             </div>
 
@@ -390,6 +400,9 @@
         {% end %}
         {% if flt['reverse'] != False %}
         {% set postfix = postfix + f"&reverse={flt['reverse']}" %}
+        {% end %}
+        {% if flt['name'] != None %}
+        {% set postfix = postfix + f"&name={flt['name']}" %}
         {% end %}
 
         <div class="row">

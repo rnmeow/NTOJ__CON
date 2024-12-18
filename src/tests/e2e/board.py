@@ -38,6 +38,7 @@ class BoardTest(AsyncTest):
             self.assertEqual(html.select('th._pro')[0].text, '1')
             self.assertEqual(html.select('th._pro')[1].text, '2')
             tr0 = html.select('tbody > tr')[0]
+            self.assertEqual(tr0.attrs['style'], '--bs-table-bg: #123456;')
             self.assertEqual(tr0.select_one('td._rank').text.strip(), '1')
             self.assertEqual(tr0.select_one('td._acct').text.strip(), 'admin')
             self.assertEqual(tr0.select_one('td._score').text.strip(), '200 / 9')
@@ -48,14 +49,18 @@ class BoardTest(AsyncTest):
 
             # board list
             html = self.get_html('board', admin_session)
-            self.assertEqual(len(html.select('tr')[1:]), 1)
-            self.assertEqual(html.select('tr')[1:][0].select('td')[1].text.strip(), 'Online')
+            trs = html.select('tr')
+            self.assertEqual(trs[0].select('th')[2].text.strip(), 'Expire Status')
+            self.assertEqual(trs[0].select('th')[3].text.strip(), 'Public Status')
+            self.assertEqual(len(trs[1:]), 1)
+            self.assertEqual(trs[1:][0].select('td')[1].text.strip(), 'Online')
+            self.assertEqual(trs[1:][0].select('td')[2].text.strip(), 'Public')
 
             res = admin_session.post('manage/board/update', data={
                 'reqtype': 'update',
                 'board_id': 1,
                 'name': 'board1',
-                'status': BoardConst.STATUS_ONLINE,
+                'status': BoardConst.STATUS_HIDDEN,
                 'start': self.get_isoformat(datetime.datetime.now() - datetime.timedelta(days=14)),
                 'end': self.get_isoformat(datetime.datetime.now() - datetime.timedelta(days=7)),
                 'pro_list': '1, 2',
@@ -64,8 +69,22 @@ class BoardTest(AsyncTest):
             self.assertEqual(res.text, 'S')
 
             html = self.get_html('board', admin_session)
-            self.assertEqual(len(html.select('tr')[1:]), 1)
-            self.assertEqual(html.select('tr')[1:][0].select('td')[1].text.strip(), 'Over')
+            trs = html.select('tr')
+            self.assertEqual(len(trs[1:]), 1)
+            self.assertEqual(trs[1:][0].select('td')[1].text.strip(), 'Over')
+            self.assertEqual(trs[1:][0].select('td')[2].text.strip(), 'Hidden')
+
+            with AccountContext('test1@test', 'test') as user_session:
+                # only show STATUS_ONLINE board for normal user
+                html = self.get_html('board', user_session)
+                trs = html.select('tr')
+                self.assertEqual(trs[0].select('th')[2].text.strip(), 'Expire Status')
+                self.assertEqual(len(trs[0].select('th')), 3)
+                self.assertEqual(len(trs[1:]), 0)
+
+                res = user_session.get('board/1')
+                self.assertEqual(res.text, 'Eacces')
+
             html = self.get_html('board/1', admin_session)
             self.assertEqual(html.select('th._pro')[0].text, '1')
             self.assertEqual(html.select('th._pro')[1].text, '2')
@@ -75,6 +94,20 @@ class BoardTest(AsyncTest):
             self.assertEqual(tr0.select_one('td._score').text.strip(), '0 / 0')
             self.assertEqual(tr0.select('td._pro')[0].text.strip(), '')
             self.assertEqual(tr0.select('td._pro')[1].text.strip(), '')
+
+            res = admin_session.post('manage/board/update', data={
+                'reqtype': 'update',
+                'board_id': 1,
+                'name': 'board1',
+                'status': BoardConst.STATUS_OFFLINE,
+                'start': self.get_isoformat(datetime.datetime.now() - datetime.timedelta(days=14)),
+                'end': self.get_isoformat(datetime.datetime.now() - datetime.timedelta(days=7)),
+                'pro_list': '1, 2',
+                'acct_list': '1',
+            })
+            self.assertEqual(res.text, 'S')
+            res = admin_session.get('board/1')
+            self.assertEqual(res.text, 'Eacces')
 
             res = admin_session.post('manage/board/update', data={
                 'reqtype': 'remove',

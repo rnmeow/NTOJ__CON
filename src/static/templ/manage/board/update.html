@@ -39,7 +39,7 @@
             let pro_list = j_form.find("#pro_list").val();
             let acct_list = j_form.find("#acct_list").val();
 
-            start_time = start_date_picker.viewDate; 
+            start_time = start_date_picker.viewDate;
             if (start_time == '') {
                 index.show_notify_dialog("開始時間不可為空", index.DIALOG_TYPE.warning);
                 return;
@@ -109,6 +109,7 @@
 </script>
 {% end %}
 {% block content %}
+{% from services.board import BoardConst %}
 <div class="col-lg-10 ms-lg-2 mt-lg-2">
 	<form id="form">
 		<div class="mb-1">
@@ -118,9 +119,9 @@
         <div class="mb-1">
             <label for="#status" class="form-label">Status</label>
 			<select class="form-select" id="status">
-				<option value="0" {% if board['status'] == 0 %} selected {% end %} >Online</option>
-				<option value="1" {% if board['status'] == 1 %} selected {% end %} >Hidden</option>
-				<option value="2" {% if board['status'] == 2 %} selected {% end %} >Offline</option>
+                <option value="{{ BoardConst.STATUS_ONLINE }}" {% if board['status'] == BoardConst.STATUS_ONLINE %} selected {% end %} >Online</option>
+				<option value="{{ BoardConst.STATUS_HIDDEN }}" {% if board['status'] == BoardConst.STATUS_HIDDEN %} selected {% end %} >Hidden</option>
+                <option value="{{ BoardConst.STATUS_OFFLINE }}" {% if board['status'] == BoardConst.STATUS_OFFLINE %} selected {% end %} >Offline</option>
 			</select>
         </div>
 
